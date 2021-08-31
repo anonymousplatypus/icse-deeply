@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 # Add project source to path
 root = Path(os.path.abspath(os.path.join(
-    os.getcwd().split('Modified-CoGCN')[0], 'Modified-CoGCN')))
+    os.getcwd().split('icse-cogcn2a')[0], 'icse-cogcn2a')))
 
 if root not in sys.path:
     sys.path.append(root.__str__())
@@ -115,14 +115,12 @@ def main():
 
     args = parser.parse_args()
 
-    # !! CLIENT DATA !! #
     partition_sizes = {
         'acmeair': range(3, 13, 2),
         'daytrader': range(3, 36, 2),
         'jpetstore': range(3, 18, 2),
         'plants': range(2, 13, 2)
     }
-    # !! CLIENT DATA !! #
 
     for proj_path in root.joinpath('datasets_runtime').glob("*"):
         if not proj_path.is_dir():
@@ -132,8 +130,8 @@ def main():
         results_table = []
         header = ["Partitions", "BCS[-]", "ICP[-]",
                   "SM[+]", "MQ[+]", "IFN[-]", "NED[-]", "Entropy[+]", "WC_time[-]", "Loss[-]"]
-        cogcn_input = proj_path.joinpath('cogcn_input')
-        cogcn_output = proj_path.joinpath('cogcn_output')
+        deeply_input = proj_path.joinpath('deeply_input')
+        deeply_output = proj_path.joinpath('deeply_output')
 
         # Some files required to compute metrics
         with open(proj_path.joinpath("mono2micro_output", "bcs_per_class.json"), 'r') as f:
@@ -147,14 +145,14 @@ def main():
 
         def objective(hp_args):
             all_args = obj({**args, **hp_args})
-            # Run CoGCN
+            # Run deeply
             retries = 0
             while retries < 3:
                 now = time()
                 k = np.random.randint(cluster_size[0], cluster_size[1] + 1)
 
                 try:
-                    partitions = train(all_args, num_clusters=k, datapath=cogcn_input)
+                    partitions = train(all_args, num_clusters=k, datapath=deeply_input)
                     break
                 except:
                     print(f'Iteration failed; retrying {retries} / 3')
@@ -164,7 +162,7 @@ def main():
                 return 100
 
             # Get the mapping file
-            with open(cogcn_output.joinpath('mapping.json')) as mapping_file:
+            with open(deeply_output.joinpath('mapping.json')) as mapping_file:
                 mapping = json.load(mapping_file)
 
             try:
@@ -173,12 +171,12 @@ def main():
                     partitions[id_]) for class_name, id_ in mapping.items()}
             except err:
                 print('[ERR] Could not save cluster assignment. Check that ' +\
-                        f'mapping.json is in datasets_runtime/{proj_path.stem}/cogcn_output' +\
+                        f'mapping.json is in datasets_runtime/{proj_path.stem}/deeply_output' +\
                         ' directory and has the entries of the form "ClassName": int in the ' +\
                         'json.')
                 print(err)
 
-            with open(cogcn_output.joinpath('vertical_cluster_assignment__{}.json'.format(k)), 'w') as cluster_assgn_file:
+            with open(deeply_output.joinpath('vertical_cluster_assignment__{}.json'.format(k)), 'w') as cluster_assgn_file:
                 json.dump(vertical_cluster_assignment,
                           cluster_assgn_file, indent=4)
 
