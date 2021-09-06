@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 # Add project source to path
 root = Path(os.path.abspath(os.path.join(
-    os.getcwd().split('icse-cogcn2a')[0], 'icse-cogcn2a')))
+    os.getcwd().split('icse-deeply')[0], 'icse-deeply')))
 
 if root not in sys.path:
     sys.path.append(root.__str__())
@@ -43,9 +43,11 @@ weights = {
     }
 }
 
+
 def get_entropy(x):
     probs = x / sum(x)
     return -sum(probs * np.log(probs))
+
 
 class obj(object):
     def __init__(self, d: dict):
@@ -152,12 +154,13 @@ def main():
                 k = np.random.randint(cluster_size[0], cluster_size[1] + 1)
 
                 try:
-                    partitions = train(all_args, num_clusters=k, datapath=deeply_input)
+                    partitions = train(
+                        all_args, num_clusters=k, datapath=deeply_input)
                     break
                 except:
                     print(f'Iteration failed; retrying {retries} / 3')
                     retries += 1
-            
+
             if retries == 3:
                 return 100
 
@@ -170,10 +173,10 @@ def main():
                 vertical_cluster_assignment = {class_name: int(
                     partitions[id_]) for class_name, id_ in mapping.items()}
             except err:
-                print('[ERR] Could not save cluster assignment. Check that ' +\
-                        f'mapping.json is in datasets_runtime/{proj_path.stem}/deeply_output' +\
-                        ' directory and has the entries of the form "ClassName": int in the ' +\
-                        'json.')
+                print('[ERR] Could not save cluster assignment. Check that ' +
+                      f'mapping.json is in datasets_runtime/{proj_path.stem}/deeply_output' +
+                      ' directory and has the entries of the form "ClassName": int in the ' +
+                      'json.')
                 print(err)
 
             with open(deeply_output.joinpath('vertical_cluster_assignment__{}.json'.format(k)), 'w') as cluster_assgn_file:
@@ -193,7 +196,8 @@ def main():
                 ROOT, partition_class_bcs_assignment, runtime_call_volume)
             ifn = interface_number(
                 ROOT, partition_class_bcs_assignment, runtime_call_volume)
-            ned, class_sizes = non_extreme_distribution(partition_class_bcs_assignment)
+            ned, class_sizes = non_extreme_distribution(
+                partition_class_bcs_assignment)
             entropy = get_entropy(class_sizes)
 
             # Loss function with weights learned from data.
